@@ -1,0 +1,73 @@
+class Solution:
+    def resultArray(self, nums, k, queries):
+
+        class Node:
+            def __init__(self):
+                self.prod = 1
+                self.cnt = [0] * k
+
+        tree = [Node() for _ in range(4 * len(nums))]
+
+        def merge(a, b):
+            c = Node()
+            c.prod = (a.prod * b.prod) % k
+
+            for r in range(k):
+                c.cnt[r] += a.cnt[r]
+                c.cnt[(r * a.prod) % k] += b.cnt[r]
+
+            return c
+
+        def build(p, l, r):
+            if l == r:
+                tree[p].prod = nums[l] % k
+                tree[p].cnt[tree[p].prod] = 1
+                return
+
+            m = (l + r) // 2
+            build(2*p, l, m)
+            build(2*p+1, m+1, r)
+            tree[p] = merge(tree[2*p], tree[2*p+1])
+
+        def update(p, l, r, idx, val):
+            if l == r:
+                tree[p] = Node()
+                tree[p].prod = val % k
+                tree[p].cnt[tree[p].prod] = 1
+                return
+
+            m = (l + r) // 2
+            if idx <= m:
+                update(2*p, l, m, idx, val)
+            else:
+                update(2*p+1, m+1, r, idx, val)
+
+            tree[p] = merge(tree[2*p], tree[2*p+1])
+
+        def query(p, l, r, ql):
+            if l >= ql:
+                return tree[p]
+
+            m = (l + r) // 2
+
+            if ql > m:
+                return query(2*p+1, m+1, r, ql)
+
+            if ql <= l:
+                return query(2*p, l, m, ql)
+
+            return merge(
+                query(2*p, l, m, ql),
+                query(2*p+1, m+1, r, ql)
+            )
+
+        n = len(nums)
+        build(1, 0, n-1)
+
+        ans = []
+
+        for idx, val, start, x in queries:
+            update(1, 0, n-1, idx, val)
+            ans.append(query(1, 0, n-1, start).cnt[x])
+
+        return ans
