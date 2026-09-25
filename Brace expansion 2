@@ -1,0 +1,34 @@
+class Solution:
+    def braceExpansionII(self, expression: str):
+        i = 0
+
+        def expr():
+            nonlocal i
+            ans = set()
+            ans |= term()
+
+            while i < len(expression) and expression[i] == ',':
+                i += 1
+                ans |= term()
+
+            return ans
+
+        def term():
+            nonlocal i
+            ans = {""}
+
+            while i < len(expression) and expression[i] not in "},":
+                if expression[i] == '{':
+                    i += 1
+                    cur = expr()
+                    i += 1   # skip '}'
+                else:
+                    cur = {expression[i]}
+                    i += 1
+
+                # Cartesian product = concatenation
+                ans = {a + b for a in ans for b in cur}
+
+            return ans
+
+        return sorted(expr())
